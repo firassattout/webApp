@@ -3,7 +3,7 @@ import groupsService from "../Services/groupsService.mjs";
 import { checkUser } from "../middleware/checkUser.mjs";
 
 export const createGroups = asyncHandler(async (req, res) => {
-  const result = await groupsService.create(req.body);
+  const result = await groupsService.create(req);
   res.json(result);
 });
 export const showGroups = asyncHandler(async (req, res) => {

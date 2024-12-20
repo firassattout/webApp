@@ -1,8 +1,7 @@
 import stream from "stream";
 import { google } from "googleapis";
-import sharp from "sharp";
 
-export const upload = async (file, path) => {
+export const uploadFile = async (file, folder, numberOfEdit) => {
   const KEYFILEPATH = "./googleFile.json";
   const SCOPES = ["https://www.googleapis.com/auth/drive"];
 
@@ -11,22 +10,16 @@ export const upload = async (file, path) => {
     scopes: SCOPES,
   });
 
-  const compressedBuffer = await sharp(file.buffer)
-    .resize(800)
-    .jpeg({ quality: 70 })
-    .toBuffer();
-
   const bufferStream = new stream.PassThrough();
-  bufferStream.end(compressedBuffer);
-
+  bufferStream.end(file.buffer);
   const { data } = await google.drive({ version: "v3", auth }).files.create({
     media: {
-      mimeType: "image/jpeg",
+      mimeType: file.mimeType,
       body: bufferStream,
     },
     requestBody: {
-      name: file.originalname,
-      parents: [path],
+      name: numberOfEdit + "-" + file.originalname,
+      parents: [folder],
     },
     fields: "id,name",
   });

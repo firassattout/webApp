@@ -6,6 +6,7 @@ const GroupsSchema = new mongoose.Schema(
     name: { type: String, required: true },
     photo: { type: String },
     state: { type: String },
+    filesFolder: { type: String },
   },
   { timestamps: true }
 );

@@ -10,6 +10,10 @@ export const showGroups = asyncHandler(async (req, res) => {
   const result = await groupsService.show(req.body);
   res.json(result);
 });
+export const showUsers = asyncHandler(async (req, res) => {
+  const result = await groupsService.showUsers(req.body);
+  res.json(result);
+});
 export const addUser = asyncHandler(async (req, res) => {
   const result = await groupsService.addUser(req.body);
   res.json(result);

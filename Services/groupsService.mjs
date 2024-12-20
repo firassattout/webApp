@@ -1,25 +1,35 @@
+import { createFolder } from "../config/createFileForGroup.mjs";
 import { upload } from "../config/uploadImage.mjs";
 import { Groups, validateGroups } from "../models/Groups.mjs";
 import { GroupUser } from "../models/GroupUser.mjs";
 
 const create = async (req) => {
-  if (req?.files[0]) {
-    const { id } = await upload(req?.files[0]);
-    if (id) {
-      req.body.photo = `https://drive.google.com/thumbnail?id=${id}&sz=s300`;
-    }
-  }
   const { error } = validateGroups(req?.body);
   if (error) throw new Error(error.details[0].message);
-  const groups = new Groups(req?.body);
-  const result = await groups.save();
-  new GroupUser({
-    groupId: result?.id,
-    userId: req?.body?.IdFromToken,
-    role: "admin",
-  }).save();
 
-  return { result, message: "added successfully  " };
+  const folder = await createFolder(
+    req.body.name,
+    "1uYReipLqkGHRBMV2-2quOkiOaqtx5FL0"
+  );
+  if (folder) {
+    if (req?.files[0]) {
+      const { id } = await upload(req?.files[0], folder);
+      if (id) {
+        req.body.photo = `https://drive.google.com/thumbnail?id=${id}&sz=s300`;
+      }
+    }
+    const groups = new Groups({ ...req?.body, filesFolder: folder });
+    const result = await groups.save();
+    new GroupUser({
+      groupId: result?.id,
+      userId: req?.body?.IdFromToken,
+      role: "admin",
+    }).save();
+
+    return { result, message: "added successfully  " };
+  } else {
+    return { message: "error" };
+  }
 };
 
 const show = async (data) => {
@@ -27,6 +37,21 @@ const show = async (data) => {
     userId: data?.IdFromToken,
   }).populate("groupId");
   return groupUser;
+};
+
+const showUsers = async (data) => {
+  const groupUser = await GroupUser.find({
+    groupId: data?.groupId,
+  }).populate("userId");
+  const result = groupUser.map((i) => {
+    const data = {
+      name: i?.userId?.name,
+      email: i?.userId?.email,
+      role: i?.role,
+    };
+    return data;
+  });
+  return { result, AllNumber: result.length };
 };
 
 const addUser = async (data) => {
@@ -58,4 +83,4 @@ const addUser = async (data) => {
   }
   return { message: "added successfully  " };
 };
-export default { create, show, addUser };
+export default { create, show, addUser, showUsers };

@@ -1,5 +1,5 @@
 import express from "express";
-import { auth, file, groups, user } from "./Routes/index.js";
+import { auth, fileRoutes, groups, user } from "./Routes/index.js";
 import connectDb from "./config/conectDb.mjs";
 import { configDotenv } from "dotenv";
 import { notfound, errorHandler } from "./middleware/errorMiddleware.mjs";
@@ -19,7 +19,7 @@ app.use(cors());
 app.use("/api", auth);
 app.use("/api", groups);
 app.use("/api", user);
-app.use("/api", file);
+app.use("/api", fileRoutes);
 
 app.use(notfound);
 app.use(errorHandler);

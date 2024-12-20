@@ -1,6 +1,6 @@
 import { auth } from "./auth.mjs";
 import { groups } from "./groups.mjs";
 import { user } from "./user.mjs";
-import { file } from "./file.mjs";
+import { fileRoutes } from "./fileRoutes.mjs";
 
-export { auth, groups, user, file };
+export { auth, groups, user, fileRoutes };

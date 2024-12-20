@@ -2,7 +2,6 @@ import { createFolder } from "../config/createFileForGroup.mjs";
 import { uploadFile } from "../config/uploadFiles.mjs";
 import { Files, validateFiles } from "../models/Files.mjs";
 import { Groups } from "../models/Groups.mjs";
-import { GroupUser } from "../models/GroupUser.mjs";
 
 const create = async (req) => {
   let folder;

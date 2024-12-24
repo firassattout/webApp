@@ -34,7 +34,7 @@ const create = async (req) => {
 
 const show = async (data) => {
   const groupUser = await GroupUser.find({
-    userId: data?.IdFromToken,
+    userId: data?.body.IdFromToken,
   }).populate("groupId");
   return groupUser;
 };

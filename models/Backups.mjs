@@ -1,21 +1,26 @@
-
 import Joi from "joi";
 import mongoose from "mongoose";
 
-const BackupsSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  status: { type: String, required: true },
-  filePath: { type: String, required: true },
-  fileId:{ type: mongoose.Schema.Types.ObjectId, required: true, ref: "Files" },
-  dateOfBackup: { type: Date, required: true },
-},{ timestamps: true });
+const BackupsSchema = new mongoose.Schema(
+  {
+    filePath: { type: String, required: true },
+    fileDifferencePath: { type: String },
+    commit: { type: String },
+    fileId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "Files",
+    },
+  },
+  { timestamps: true }
+);
 
-export const User = mongoose.model("Backups", BackupsSchema);
+export const Backups = mongoose.model("Backups", BackupsSchema);
 
 export function validateBackups(obj) {
   return Joi.object({
-    name: Joi.string().required(),
-
-  }).validate(obj);
+    fileId: Joi.string().required(),
+  })
+    .options({ allowUnknown: true })
+    .validate(obj);
 }
-

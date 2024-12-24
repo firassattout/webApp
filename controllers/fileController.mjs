@@ -6,7 +6,16 @@ export const createFile = asyncHandler(async (req, res) => {
   res.json(result);
 });
 
+export const updateFile = asyncHandler(async (req, res) => {
+  const result = await fileService.update(req);
+  res.json(result);
+});
+export const differencesFile = asyncHandler(async (req, res) => {
+  const result = await fileService.differences(req);
+  res.json(result);
+});
+
 export const showFiles = asyncHandler(async (req, res) => {
-  const result = await fileService.show(req.body);
+  const result = await fileService.show(req.params);
   res.json(result);
 });

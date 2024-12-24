@@ -5,8 +5,6 @@ const FilesSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     status: { type: String, required: true },
-    numberOfEdit: { type: Number },
-    filePath: { type: String, required: true },
     filesFolder: { type: String },
     groupId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -20,7 +18,7 @@ const FilesSchema = new mongoose.Schema(
     addedBy: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-      ref: "GroupUser",
+      ref: "Users",
     },
     acceptedByAdmin: { type: Boolean },
   },

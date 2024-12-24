@@ -7,7 +7,7 @@ export const createGroups = asyncHandler(async (req, res) => {
   res.json(result);
 });
 export const showGroups = asyncHandler(async (req, res) => {
-  const result = await groupsService.show(req.body);
+  const result = await groupsService.show(req);
   res.json(result);
 });
 export const showUsers = asyncHandler(async (req, res) => {

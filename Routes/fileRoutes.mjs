@@ -8,7 +8,7 @@ import {
   differencesFile,
   showFiles,
   updateFile,
-} from "../controllers/FileController.mjs";
+} from "../controllers/fileController.mjs";
 const upload = multer();
 export const fileRoutes = express.Router();
 

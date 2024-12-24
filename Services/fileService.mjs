@@ -75,7 +75,7 @@ const update = async (req) => {
     } else return { message: "error" };
   }
 };
-const differences = async (req) => {
+const differences = async (req, res) => {
   const file = await FileRepository.findById(req.body.id);
   if (!file) return { message: "error" };
 
@@ -101,19 +101,25 @@ const differences = async (req) => {
       file2Response.text(),
     ]);
 
-    const differences = diffLines(text1, text2);
+    const differences = diffLines(text2, text1);
 
-    const comparisonResult = differences.map((part) => {
+    let modifiedFileContent = "";
+    differences.forEach((part) => {
       if (part.added) {
-        return { type: "added", value: part.value };
+        modifiedFileContent += `${part.value}`;
       } else if (part.removed) {
-        return { type: "removed", value: part.value };
+        modifiedFileContent += `${part.value} -> `;
       } else {
-        return { type: "unchanged", value: part.value };
+        modifiedFileContent += part.value;
       }
     });
 
-    return { differences: comparisonResult };
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="comparison_result.txt"'
+    );
+    res.setHeader("Content-Type", "text/plain");
+    res.send(modifiedFileContent);
   } catch (error) {
     console.error("Error comparing files:", error);
     return { error: "An error occurred while comparing files." };

@@ -11,7 +11,7 @@ export const updateFile = asyncHandler(async (req, res) => {
   res.json(result);
 });
 export const differencesFile = asyncHandler(async (req, res) => {
-  const result = await fileService.differences(req);
+  const result = await fileService.differences(req, res);
   res.json(result);
 });
 

@@ -1,9 +1,18 @@
 import { createFolder } from "../config/createFileForGroup.mjs";
 import { upload } from "../config/uploadImage.mjs";
+import {
+  endFileTransaction,
+  startTransaction,
+} from "../middleware/transactionHandlers.mjs";
+import { withTransaction } from "../middleware/transactionMiddleware.mjs";
 import { Groups, validateGroups } from "../models/Groups.mjs";
 import { GroupUser } from "../models/GroupUser.mjs";
+import GroupRepository from "../repositories/GroupRepository.mjs";
 
-const create = async (req) => {
+const create = await withTransaction(
+  startTransaction,
+  endFileTransaction
+)(async (req, context) => {
   const { error } = validateGroups(req?.body);
   if (error) throw new Error(error.details[0].message);
 
@@ -12,25 +21,29 @@ const create = async (req) => {
     "1uYReipLqkGHRBMV2-2quOkiOaqtx5FL0"
   );
   if (folder) {
+    context.folder = folder;
     if (req?.files[0]) {
       const { id } = await upload(req?.files[0], folder);
       if (id) {
         req.body.photo = `https://drive.google.com/thumbnail?id=${id}&sz=s300`;
       }
     }
-    const groups = new Groups({ ...req?.body, filesFolder: folder });
-    const result = await groups.save();
+    const groups = await GroupRepository.createGroups({
+      ...req?.body,
+      filesFolder: folder,
+    });
+
     new GroupUser({
-      groupId: result?.id,
+      groupId: groups?.id,
       userId: req?.body?.IdFromToken,
       role: "admin",
     }).save();
 
-    return { result, message: "added successfully  " };
+    return { groups, message: "added successfully  " };
   } else {
     return { message: "error" };
   }
-};
+});
 
 const show = async (data) => {
   const groupUser = await GroupUser.find({

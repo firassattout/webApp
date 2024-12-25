@@ -2,6 +2,7 @@ import { createFolder } from "../config/createFileForGroup.mjs";
 import { uploadFile } from "../config/uploadFiles.mjs";
 import {
   endFileTransaction,
+  endTransaction,
   startTransaction,
 } from "../middleware/transactionHandlers.mjs";
 import { Backups, validateBackups } from "../models/Backups.mjs";
@@ -10,6 +11,7 @@ import { Groups } from "../models/Groups.mjs";
 import FileRepository from "../repositories/FileRepository.mjs";
 import { withTransaction } from "../middleware/transactionMiddleware.mjs";
 import { diffLines } from "diff";
+
 const create = await withTransaction(
   startTransaction,
   endFileTransaction
@@ -28,7 +30,7 @@ const create = await withTransaction(
       const { id } = await uploadFile(req?.files[0], folder, 0);
       if (id) {
         filePath = `https://drive.usercontent.google.com/download?id=${id}&export=download`;
-      } else return { message: "error" };
+      } else throw new Error("Error");
     }
     if (filePath) {
       const file = await FileRepository.createFile({
@@ -45,7 +47,7 @@ const create = await withTransaction(
       }).save();
 
       return { file, Backup, message: "added successfully" };
-    } else return { message: "error" };
+    } else throw new Error("Error");
   }
 });
 const update = async (req) => {
@@ -53,7 +55,12 @@ const update = async (req) => {
   if (error) throw new Error(error.details[0].message);
   let filePath;
   const file = await FileRepository.findById(req.body.fileId);
-  if (file.filesFolder) {
+
+  if (
+    file.filesFolder &&
+    file.status === "close" &&
+    file.reservedBy?.toString() === req.body.IdFromToken
+  ) {
     const backups = await Backups.find({ fileId: file.id });
     if (req?.files[0]) {
       const { id } = await uploadFile(
@@ -61,9 +68,10 @@ const update = async (req) => {
         file.filesFolder,
         backups.length + 1
       );
+
       if (id) {
         filePath = `https://drive.usercontent.google.com/download?id=${id}&export=download`;
-      } else return { message: "error" };
+      } else throw new Error("Error");
     }
     if (filePath) {
       const Backup = await new Backups({
@@ -71,13 +79,18 @@ const update = async (req) => {
         fileId: file.id,
       }).save();
 
+      await Files.findByIdAndUpdate(file._id, {
+        $set: { status: "open", reservedBy: null },
+      });
+
       return { Backup, message: "added successfully" };
-    } else return { message: "error" };
-  }
+    } else throw new Error("Error");
+  } else throw new Error("Error");
 };
+
 const differences = async (req, res) => {
   const file = await FileRepository.findById(req.body.id);
-  if (!file) return { message: "error" };
+  if (!file) throw new Error("Error");
 
   const backups = await Backups.find({ fileId: file.id }).sort({
     createdAt: -1,
@@ -121,14 +134,13 @@ const differences = async (req, res) => {
     res.setHeader("Content-Type", "text/plain");
     res.send(modifiedFileContent);
   } catch (error) {
-    console.error("Error comparing files:", error);
     return { error: "An error occurred while comparing files." };
   }
 };
 
 const show = async (data) => {
   const files = await Files.find({
-    groupId: data?.groupId,
+    groupId: data?.params?.groupId,
   })
     .populate("addedBy", "name")
     .lean();
@@ -138,9 +150,48 @@ const show = async (data) => {
       createdAt: -1,
     });
     f.filePath = backups.filePath;
+    f.isYouReserved =
+      f.reservedBy?.toString() === data.body.IdFromToken || false;
   }
-
   return files;
 };
 
-export default { create, show, update, differences };
+const checkIn = await withTransaction(
+  startTransaction,
+  endTransaction
+)(async (data, res, context) => {
+  if (!data.body.filesId) {
+    throw new Error("Error");
+  }
+
+  for (const file of data.body.filesId) {
+    const result = await Files.findByIdAndUpdate(file, {
+      $set: { status: "close", reservedBy: data.body.IdFromToken },
+    }).session(context.session);
+
+    if (!result || result.status === "close") {
+      throw new Error("File update failed or already closed");
+    }
+  }
+  return { message: "reserved successfully" };
+});
+
+const checkOut = async (data) => {
+  if (!data.body.fileId) {
+    throw new Error("Error");
+  }
+  const file = await FileRepository.findById(data.body.fileId);
+
+  if (file.reservedBy?.toString() === data.body.IdFromToken) {
+    const result = await Files.findByIdAndUpdate(data.body.fileId, {
+      $set: { status: "open", reservedBy: data.body.IdFromToken },
+    });
+
+    if (!result || result.status === "open") {
+      throw new Error("File update failed or already open");
+    }
+    return { message: "opened successfully" };
+  } else throw new Error("you don't have access");
+};
+
+export default { create, show, update, differences, checkIn, checkOut };

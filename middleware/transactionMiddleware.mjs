@@ -2,17 +2,17 @@ export const withTransaction = (startFn, endFn) => {
   return async (serviceFn) => {
     return async (...args) => {
       const context = {};
+      const session = await startFn();
+      context.session = session;
       try {
-        if (startFn) await startFn(...args);
-
         const result = await serviceFn(...args, context);
-
-        if (endFn) await endFn(null, ...args, context);
-
+        await endFn(null, context);
         return result;
-      } catch (error) {
-        if (endFn) await endFn(error, ...args, context);
-        throw error;
+      } catch (err) {
+        await endFn(err, context);
+        return { message: err.message };
+      } finally {
+        session.endSession();
       }
     };
   };

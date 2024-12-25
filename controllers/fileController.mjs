@@ -16,6 +16,14 @@ export const differencesFile = asyncHandler(async (req, res) => {
 });
 
 export const showFiles = asyncHandler(async (req, res) => {
-  const result = await fileService.show(req.params);
+  const result = await fileService.show(req);
+  res.json(result);
+});
+export const checkIn = asyncHandler(async (req, res) => {
+  const result = await fileService.checkIn(req, res);
+  res.json(result);
+});
+export const checkOut = asyncHandler(async (req, res) => {
+  const result = await fileService.checkOut(req, res);
   res.json(result);
 });

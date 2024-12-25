@@ -10,6 +10,7 @@ import {
   updateFile,
   checkIn,
   checkOut,
+  showBackups,
 } from "../controllers/fileController.mjs";
 const upload = multer();
 export const fileRoutes = express.Router();
@@ -20,3 +21,4 @@ fileRoutes.post("/differencesFile", checkUser, differencesFile);
 fileRoutes.get("/showFiles/:groupId", checkUser, showFiles);
 fileRoutes.post("/checkIn", checkUser, checkIn);
 fileRoutes.post("/checkOut", checkUser, checkOut);
+fileRoutes.post("/showBackups", checkUser, showBackups);

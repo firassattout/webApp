@@ -27,3 +27,7 @@ export const checkOut = asyncHandler(async (req, res) => {
   const result = await fileService.checkOut(req, res);
   res.json(result);
 });
+export const showBackups = asyncHandler(async (req, res) => {
+  const result = await fileService.showBackups(req, res);
+  res.json(result);
+});

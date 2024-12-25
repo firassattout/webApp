@@ -184,7 +184,7 @@ const checkOut = async (data) => {
 
   if (file.reservedBy?.toString() === data.body.IdFromToken) {
     const result = await Files.findByIdAndUpdate(data.body.fileId, {
-      $set: { status: "open", reservedBy: data.body.IdFromToken },
+      $set: { status: "open", reservedBy: null },
     });
 
     if (!result || result.status === "open") {
@@ -194,4 +194,26 @@ const checkOut = async (data) => {
   } else throw new Error("you don't have access");
 };
 
-export default { create, show, update, differences, checkIn, checkOut };
+const showBackups = async (data) => {
+  if (!data.body.fileId) {
+    throw new Error("Error");
+  }
+  const backups = await Backups.find({ fileId: data.body.fileId }).sort({
+    createdAt: -1,
+  });
+
+  if (!backups) {
+    throw new Error("File update failed or already open");
+  }
+  return backups;
+};
+
+export default {
+  create,
+  show,
+  update,
+  differences,
+  checkIn,
+  checkOut,
+  showBackups,
+};

@@ -5,9 +5,11 @@ import {
   startTransaction,
 } from "../middleware/transactionHandlers.mjs";
 import { withTransaction } from "../middleware/transactionMiddleware.mjs";
-import { Groups, validateGroups } from "../models/Groups.mjs";
+import { validateGroups } from "../models/Groups.mjs";
 import { GroupUser } from "../models/GroupUser.mjs";
+import { Users } from "../models/Users.mjs";
 import GroupRepository from "../repositories/GroupRepository.mjs";
+import { logEvent } from "./tracingService.mjs";
 
 const create = await withTransaction(
   startTransaction,
@@ -39,6 +41,11 @@ const create = await withTransaction(
       role: "admin",
     }).save();
 
+    await logEvent(
+      "Group Create",
+      req.body.IdFromToken,
+      "the group: " + groups.name + " created"
+    );
     return { groups, message: "added successfully  " };
   } else {
     return { message: "error" };
@@ -76,7 +83,8 @@ const addUser = async (data) => {
     userId: data?.IdFromToken,
     groupId: data.groupId,
   });
-  if (admin.role !== "admin") {
+
+  if (admin && admin.role !== "admin") {
     throw new Error("you haven't access for this group");
   }
   const added = await GroupUser.findOne({
@@ -94,6 +102,13 @@ const addUser = async (data) => {
   if (!result) {
     throw new Error("group or user not found");
   }
+
+  const user = await Users.findById(data.userId);
+  await logEvent(
+    "Group User Add",
+    data?.IdFromToken,
+    "user: " + user.name + " , email: " + user.email + " added"
+  );
   return { message: "added successfully  " };
 };
 export default { create, show, addUser, showUsers };

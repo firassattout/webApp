@@ -11,6 +11,11 @@ const BackupsSchema = new mongoose.Schema(
       required: true,
       ref: "Files",
     },
+    addedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "Users",
+    },
   },
   { timestamps: true }
 );

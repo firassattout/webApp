@@ -18,7 +18,7 @@ export const uploadFile = async (file, folder, numberOfEdit) => {
       body: bufferStream,
     },
     requestBody: {
-      name: numberOfEdit + "-" + file.originalname,
+      name: numberOfEdit,
       parents: [folder],
     },
     fields: "id,name",

@@ -13,4 +13,7 @@ export default new (class FileRepository {
     const file = new Files(data);
     return await file.save();
   }
+  async findByIdAndUpdate(id, data) {
+    return await Files.findByIdAndUpdate(id, data);
+  }
 })();

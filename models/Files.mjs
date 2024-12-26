@@ -13,7 +13,7 @@ const FilesSchema = new mongoose.Schema(
     },
     reservedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "GroupUser",
+      ref: "Users",
     },
     addedBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -29,7 +29,6 @@ export const Files = mongoose.model("Files", FilesSchema);
 
 export function validateFiles(obj) {
   return Joi.object({
-    name: Joi.string().required(),
     groupId: Joi.string().required(),
   })
     .options({ allowUnknown: true })

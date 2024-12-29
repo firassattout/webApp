@@ -15,6 +15,7 @@ import { removeExtension } from "../config/removeExtinction.mjs";
 import { fileTypeFromBuffer } from "file-type";
 import mammoth from "mammoth";
 import { logEvent } from "./tracingService.mjs";
+import { GroupUser } from "../models/GroupUser.mjs";
 
 const create = await withTransaction(
   startTransaction,
@@ -26,6 +27,14 @@ const create = await withTransaction(
   if (error) throw new Error(error.details[0].message);
   if (req?.files[0]) {
     const group = await Groups.findById(req.body.groupId);
+    const groupUser = await GroupUser.findOne({
+      userId: req.body?.IdFromToken,
+      groupId: group?.id,
+    });
+
+    if (!groupUser) {
+      throw new Error("Error groupUser");
+    }
     if (group.filesFolder)
       folder = await createFolder(
         removeExtension(req?.files[0].originalname),
@@ -45,6 +54,7 @@ const create = await withTransaction(
         groupId: req.body.groupId,
         addedBy: req.body.IdFromToken,
         filesFolder: folder,
+        acceptedByAdmin: groupUser.role === "admin" || false,
       });
 
       const Backup = await new Backups({
@@ -59,35 +69,39 @@ const create = await withTransaction(
       );
       return { file, Backup, message: "added successfully" };
     } else throw new Error("Error");
-  }
+  } else throw new Error("file not found");
 });
 const update = async (req) => {
   const { error } = validateBackups(req?.body);
   if (error) throw new Error(error.details[0].message);
   let filePath;
   const file = await FileRepository.findById(req.body.fileId);
-  if (file.filesFolder) {
-    if (req?.files[0] && req?.files[0].originalname !== file.name) {
-      throw new Error("File name is different");
-    }
-    if (
-      file.status !== "close" &&
-      file.reservedBy?.toString() !== req.body.IdFromToken
-    ) {
-      throw new Error("The file is not reserved.");
-    }
-    const backups = await Backups.find({ fileId: file.id });
 
-    const { id } = await uploadFile(
-      req?.files[0],
-      file.filesFolder,
-      backups.length + 1
-    );
-
-    if (id) {
-      filePath = `https://drive.usercontent.google.com/download?id=${id}&export=download`;
-    } else throw new Error("Error");
+  if (!file.filesFolder) {
+    throw new Error("Error");
   }
+  if (req?.files[0] && req?.files[0].originalname !== file.name) {
+    throw new Error("File name is different");
+  }
+  if (
+    file.status !== "close" &&
+    file.reservedBy?.toString() !== req.body.IdFromToken
+  ) {
+    throw new Error("The file is not reserved.");
+  }
+
+  const backups = await Backups.find({ fileId: file.id });
+
+  const { id } = await uploadFile(
+    req?.files[0],
+    file.filesFolder,
+    backups.length + 1
+  );
+
+  if (id) {
+    filePath = `https://drive.usercontent.google.com/download?id=${id}&export=download`;
+  } else throw new Error("Error");
+
   if (filePath) {
     const Backup = await new Backups({
       filePath: filePath,

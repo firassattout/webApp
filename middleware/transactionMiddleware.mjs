@@ -6,10 +6,12 @@ export const withTransaction = (startFn, endFn) => {
       context.session = session;
       try {
         const result = await serviceFn(...args, context);
-        await endFn(null, context);
+
+        if (endFn) await endFn(null, context);
+
         return result;
       } catch (err) {
-        await endFn(err, context);
+        if (endFn) await endFn(err, context);
         return { message: err.message };
       } finally {
         session.endSession();

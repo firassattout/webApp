@@ -20,7 +20,7 @@ const FilesSchema = new mongoose.Schema(
       required: true,
       ref: "Users",
     },
-    acceptedByAdmin: { type: Boolean },
+    acceptedByAdmin: { type: Boolean, required: true },
   },
   { timestamps: true }
 );

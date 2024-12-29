@@ -42,7 +42,11 @@ const create = await withTransaction(
       );
     context.folder = folder;
     if (folder) {
-      const { id } = await uploadFile(req?.files[0], folder, 1);
+      const { id } = await uploadFile(
+        req?.files[0],
+        folder,
+        req?.files[0].originalname
+      );
       if (id) {
         filePath = `https://drive.usercontent.google.com/download?id=${id}&export=download`;
       } else throw new Error("Error");
@@ -92,11 +96,7 @@ const update = async (req) => {
 
   const backups = await Backups.find({ fileId: file.id });
 
-  const { id } = await uploadFile(
-    req?.files[0],
-    file.filesFolder,
-    backups.length + 1
-  );
+  const { id } = await uploadFile(req?.files[0], file.filesFolder, file.name);
 
   if (id) {
     filePath = `https://drive.usercontent.google.com/download?id=${id}&export=download`;

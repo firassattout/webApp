@@ -175,7 +175,7 @@ const differences = async (req, res) => {
       if (part.added) {
         modifiedFileContent += `new: \n${part.value} \n`;
       } else if (part.removed) {
-        modifiedFileContent += `old: \n${part.value} `;
+        modifiedFileContent += `\n old: \n${part.value} `;
       } else {
         modifiedFileContent += part.value;
       }

@@ -173,9 +173,9 @@ const differences = async (req, res) => {
     let modifiedFileContent = "";
     differences.forEach((part) => {
       if (part.added) {
-        modifiedFileContent += `${part.value}`;
+        modifiedFileContent += `new: \n${part.value} \n`;
       } else if (part.removed) {
-        modifiedFileContent += `${part.value} -> `;
+        modifiedFileContent += `old: \n${part.value} `;
       } else {
         modifiedFileContent += part.value;
       }

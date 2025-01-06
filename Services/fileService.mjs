@@ -188,6 +188,7 @@ const differences = async (req, res) => {
 const show = async (data) => {
   const files = await Files.find({
     groupId: data?.params?.groupId,
+    acceptedByAdmin: true,
   })
     .populate("addedBy", "name")
     .lean();
@@ -195,7 +196,6 @@ const show = async (data) => {
   for (const f of files) {
     const backups = await Backups.findOne({
       fileId: f._id,
-      acceptedByAdmin: true,
     }).sort({
       createdAt: -1,
     });

@@ -170,9 +170,9 @@ const differences = async (req, res) => {
     let modifiedFileContent = "";
     differences.forEach((part) => {
       if (part.added) {
-        modifiedFileContent += `new: \n${part.value} \n`;
+        modifiedFileContent += `new: ${part.value} \n`;
       } else if (part.removed) {
-        modifiedFileContent += `\n old: \n${part.value} `;
+        modifiedFileContent += `\n old: ${part.value} `;
       } else {
         modifiedFileContent += part.value;
       }
@@ -193,7 +193,10 @@ const show = async (data) => {
     .lean();
 
   for (const f of files) {
-    const backups = await Backups.findOne({ fileId: f._id }).sort({
+    const backups = await Backups.findOne({
+      fileId: f._id,
+      acceptedByAdmin: true,
+    }).sort({
       createdAt: -1,
     });
     f.filePath = backups.filePath;

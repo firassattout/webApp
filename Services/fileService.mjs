@@ -120,15 +120,12 @@ const update = async (req) => {
 };
 
 const differences = async (req, res) => {
-  const file = await FileRepository.findById(req.body.id);
-  if (!file) throw new Error("Error");
+  const backup1 = await Backups.findById(req.body.id1);
+  const backup2 = await Backups.findById(req.body.id2);
 
-  const backups = await Backups.find({ fileId: file.id }).sort({
-    createdAt: -1,
-  });
-
-  const fileUrl1 = backups[0]?.filePath;
-  const fileUrl2 = backups[1]?.filePath;
+  if (!backup1 || !backup2) throw new Error("Error");
+  const fileUrl1 = backup1?.filePath;
+  const fileUrl2 = backup2?.filePath;
 
   if (!fileUrl1 || !fileUrl2) {
     return res.status(400).json({ error: "Both file URLs are required." });

@@ -71,7 +71,9 @@ const create = await withTransaction(
       await logEvent(
         "File Upload",
         req.body.IdFromToken,
-        file.name + " added to " + group.name
+        file.name + " added to " + group.name,
+
+        file.id
       );
       return { file, Backup, message: "added successfully" };
     } else throw new Error("Error");
@@ -116,7 +118,12 @@ const update = async (req) => {
       $set: { status: "open", reservedBy: null },
     });
 
-    await logEvent("File Update", req.body.IdFromToken, file.name + " updated");
+    await logEvent(
+      "File Update",
+      req.body.IdFromToken,
+      file.name + " updated",
+      file.id
+    );
     return { Backup, message: "added successfully" };
   } else throw new Error("Error");
 };
@@ -217,19 +224,20 @@ const checkIn = await withTransaction(
   }
 
   for (const file of data.body.filesId) {
-    const result = await FileRepository.findByIdAndUpdate(file, {
+    const result = await Files.findByIdAndUpdate(file, {
       $set: { status: "close", reservedBy: data.body.IdFromToken },
     }).session(context.session);
 
     if (!result || result.status === "close") {
       throw new Error("File update failed or already closed");
     }
+    await logEvent(
+      "File checkIn",
+      data.body.IdFromToken,
+      "reversed " + result.name + " file",
+      result.id
+    );
   }
-  await logEvent(
-    "File checkIn",
-    data.body.IdFromToken,
-    "reversed " + data.body.filesId.length + " files"
-  );
   return { message: "reserved successfully" };
 });
 
@@ -250,7 +258,8 @@ const checkOut = async (data) => {
     await logEvent(
       "File checkOut",
       data.body.IdFromToken,
-      "canceled revers " + file.name + " file"
+      "canceled revers " + file.name + " file",
+      result.id
     );
     return { message: "opened successfully" };
   } else throw new Error("you don't have access");

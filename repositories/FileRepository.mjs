@@ -5,6 +5,9 @@ export default new (class FileRepository {
   async findById(fileId) {
     return await Files.findById(fileId);
   }
+  async find(fileId) {
+    return await Files.find(fileId);
+  }
 
   async findByGroup(groupId) {
     return await File.find({ group: groupId });

@@ -34,16 +34,17 @@ const create = await withTransaction(
       filesFolder: folder,
     });
 
-    GroupRepository.newGroupUser({
+    await GroupRepository.newGroupUser({
       groupId: groups?.id,
       userId: req?.body?.IdFromToken,
       role: "admin",
-    }).save();
+    });
 
     await logEvent(
       "Group Create",
       req.body.IdFromToken,
-      "the group: " + groups.name + " created"
+      "the group: " + groups.name + " created",
+      null
     );
     return { groups, message: "added successfully  " };
   } else {
@@ -96,7 +97,7 @@ const addUser = async (data) => {
   const result = await GroupRepository.newGroupUser({
     userId: data?.userId,
     groupId: data?.groupId,
-  }).save();
+  });
 
   if (!result) {
     throw new Error("group or user not found");
@@ -106,7 +107,8 @@ const addUser = async (data) => {
   await logEvent(
     "Group User Add",
     data?.IdFromToken,
-    "user: " + user.name + " , email: " + user.email + " added"
+    "user: " + user.name + " , email: " + user.email + " added",
+    null
   );
   return { message: "added successfully  " };
 };

@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  exportTracesAsCSV,
   exportTracesAsPDF,
   exportTracesAsText,
 } from "../Services/tracingService.mjs";
@@ -20,6 +21,13 @@ tracing.get("/export/pdf", async (req, res) => {
     .populate("user", "name email")
     .sort({ timestamp: -1 });
   const filePath = await exportTracesAsPDF(traces, "./exports");
+  res.download(filePath);
+});
+tracing.get("/export/csv", async (req, res) => {
+  const traces = await Tracing.find()
+    .populate("user", "name email")
+    .sort({ timestamp: -1 });
+  const filePath = await exportTracesAsCSV(traces, "./exports");
   res.download(filePath);
 });
 

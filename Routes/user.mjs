@@ -6,7 +6,7 @@ import {
   rejectFile,
   userSearch,
 } from "../controllers/userController.mjs";
-import { getTraces } from "../Services/tracingService.mjs";
+import { getTraces, TracesGroup } from "../Services/tracingService.mjs";
 import { checkUser } from "../middleware/checkUser.mjs";
 
 export const user = express.Router();
@@ -24,4 +24,5 @@ user.get(
 );
 user.get("/acceptFile/:fileId", checkUser, acceptFile);
 user.get("/rejectFile/:fileId", checkUser, rejectFile);
-user.get("/traces", getTraces);
+user.get("/tracesFile/:fileId", checkUser, getTraces);
+user.get("/TracesGroup/:groupId", checkUser, TracesGroup);

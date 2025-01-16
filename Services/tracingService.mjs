@@ -2,13 +2,18 @@ import { Tracing } from "../models/Tracing.mjs";
 import fs from "fs";
 import path from "path";
 import PDFDocument from "pdfkit";
+import { createObjectCsvWriter } from "csv-writer";
+import FileRepository from "../repositories/FileRepository.mjs";
+import GroupRepository from "../repositories/GroupRepository.mjs";
 
-export const logEvent = async (action, userId, details) => {
+export const logEvent = async (action, userId, details, fileId) => {
   try {
     await Tracing.create({
       action,
       user: userId,
       details,
+
+      fileId,
     });
   } catch (error) {
     console.error("Error logging event:", error.message);
@@ -16,7 +21,39 @@ export const logEvent = async (action, userId, details) => {
 };
 
 export const getTraces = async (req, res) => {
-  const traces = await Tracing.find()
+  if (!req?.params?.fileId) {
+    throw new Error("id not found");
+  }
+  const file = await FileRepository.findById(req.params?.fileId);
+  const groupUser = await GroupRepository.GroupUserFindOne({
+    userId: req.body?.IdFromToken,
+    groupId: file.groupId,
+  });
+
+  if (!groupUser.role) {
+    throw new Error("you are not in this group");
+  }
+  const traces = await Tracing.find({ fileId: file.id })
+    .populate("user", "name email")
+    .sort({ createdAt: -1 });
+  res.json(traces);
+};
+export const TracesGroup = async (req, res) => {
+  if (!req?.params?.groupId) {
+    throw new Error("id not found");
+  }
+
+  const groupUser = await GroupRepository.GroupUserFindOne({
+    userId: req.body?.IdFromToken,
+    groupId: req?.params?.groupId,
+  });
+
+  if (groupUser.role !== "admin") {
+    throw new Error("you are not admin in this group");
+  }
+  const files = await FileRepository.find({ groupId: req?.params?.groupId });
+  const ids = files.map((file) => file.id);
+  const traces = await Tracing.find({ fileId: { $in: [...ids] } })
     .populate("user", "name email")
     .sort({ createdAt: -1 });
   res.json(traces);
@@ -60,5 +97,29 @@ export const exportTracesAsPDF = async (traces, outputPath) => {
   });
 
   doc.end();
+  return filePath;
+};
+
+export const exportTracesAsCSV = async (traces, outputPath) => {
+  const filePath = path.resolve(outputPath, "traces.csv");
+
+  const csvWriter = createObjectCsvWriter({
+    path: filePath,
+    header: [
+      { id: "action", title: "Action" },
+      { id: "user", title: "User" },
+      { id: "details", title: "Details" },
+      { id: "timestamp", title: "Timestamp" },
+    ],
+  });
+
+  const records = traces.map((trace) => ({
+    action: trace.action,
+    user: `${trace.user.name} (${trace.user.email})`,
+    details: JSON.stringify(trace.details, null, 2),
+    timestamp: trace.createdAt,
+  }));
+
+  await csvWriter.writeRecords(records);
   return filePath;
 };

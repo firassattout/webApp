@@ -3,6 +3,7 @@ import {
   acceptFile,
   fileRequireAcceptForAdmin,
   fileRequireAcceptForUser,
+  rejectFile,
   userSearch,
 } from "../controllers/userController.mjs";
 import { getTraces } from "../Services/tracingService.mjs";
@@ -22,4 +23,5 @@ user.get(
   fileRequireAcceptForUser
 );
 user.get("/acceptFile/:fileId", checkUser, acceptFile);
+user.get("/rejectFile/:fileId", checkUser, rejectFile);
 user.get("/traces", getTraces);

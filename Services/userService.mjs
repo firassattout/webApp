@@ -14,13 +14,16 @@ const fileRequireAcceptForAdmin = async (req) => {
     userId: req.body?.IdFromToken,
     groupId: req?.params?.groupId,
   });
-  if (groupUser.role !== "admin") {
+  if (!groupUser) {
+    throw new Error(" not found");
+  }
+  if (groupUser?.role !== "admin") {
     throw new Error("you not admin");
   }
   const files = await Files.find({
     groupId: req?.params?.groupId,
     acceptedByAdmin: false,
-  });
+  }).populate("addedBy", "name");
   return files;
 };
 const fileRequireAcceptForUser = async (req) => {
@@ -28,7 +31,7 @@ const fileRequireAcceptForUser = async (req) => {
     groupId: req?.params?.groupId,
     addedBy: req?.body?.IdFromToken,
     acceptedByAdmin: false,
-  });
+  }).populate("addedBy", "name");
   return files;
 };
 
@@ -43,7 +46,7 @@ const acceptFile = async (req) => {
   });
 
   if (groupUser.role !== "admin") {
-    throw new Error("you not admin");
+    throw new Error("you are not admin");
   }
   await Files.findByIdAndUpdate(req.params?.fileId, {
     $set: { acceptedByAdmin: true },
@@ -52,9 +55,30 @@ const acceptFile = async (req) => {
   return { message: "accepted successfully" };
 };
 
+const rejectFile = async (req) => {
+  if (!req?.params?.fileId) {
+    throw new Error("id not found");
+  }
+  const file = await Files.findById(req.params?.fileId);
+  const groupUser = await GroupUser.findOne({
+    userId: req.body?.IdFromToken,
+    groupId: file.groupId,
+  });
+
+  if (groupUser.role !== "admin") {
+    throw new Error("you are not admin");
+  }
+  await Files.findByIdAndUpdate(req.params?.fileId, {
+    $set: { acceptedByAdmin: false },
+  });
+
+  return { message: "rejected successfully" };
+};
+
 export default {
   search,
   fileRequireAcceptForAdmin,
   fileRequireAcceptForUser,
   acceptFile,
+  rejectFile,
 };

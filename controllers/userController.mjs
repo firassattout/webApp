@@ -18,3 +18,7 @@ export const acceptFile = asyncHandler(async (req, res) => {
   const result = await userService.acceptFile(req);
   res.json(result);
 });
+export const rejectFile = asyncHandler(async (req, res) => {
+  const result = await userService.rejectFile(req);
+  res.json(result);
+});

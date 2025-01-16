@@ -1,19 +1,18 @@
 import { createFolder } from "../config/createFileForGroup.mjs";
 import { upload } from "../config/uploadImage.mjs";
 import {
-  endFileTransaction,
+  endTransactionWithFile,
   startTransaction,
 } from "../middleware/transactionHandlers.mjs";
 import { withTransaction } from "../middleware/transactionMiddleware.mjs";
 import { validateGroups } from "../models/Groups.mjs";
-import { GroupUser } from "../models/GroupUser.mjs";
 import { Users } from "../models/Users.mjs";
 import GroupRepository from "../repositories/GroupRepository.mjs";
 import { logEvent } from "./tracingService.mjs";
 
 const create = await withTransaction(
   startTransaction,
-  endFileTransaction
+  endTransactionWithFile
 )(async (req, context) => {
   const { error } = validateGroups(req?.body);
   if (error) throw new Error(error.details[0].message);
@@ -35,7 +34,7 @@ const create = await withTransaction(
       filesFolder: folder,
     });
 
-    new GroupUser({
+    GroupRepository.newGroupUser({
       groupId: groups?.id,
       userId: req?.body?.IdFromToken,
       role: "admin",
@@ -53,14 +52,14 @@ const create = await withTransaction(
 });
 
 const show = async (data) => {
-  const groupUser = await GroupUser.find({
+  const groupUser = await GroupRepository.GroupUserFind({
     userId: data?.body.IdFromToken,
   }).populate("groupId");
   return groupUser;
 };
 
 const showUsers = async (data) => {
-  const groupUser = await GroupUser.find({
+  const groupUser = await GroupRepository.GroupUserFind({
     groupId: data?.groupId,
   }).populate("userId");
   const result = groupUser.map((i) => {
@@ -79,7 +78,7 @@ const addUser = async (data) => {
     throw new Error("data not found");
   }
 
-  const admin = await GroupUser.findOne({
+  const admin = await GroupRepository.GroupUserFindOne({
     userId: data?.IdFromToken,
     groupId: data.groupId,
   });
@@ -87,14 +86,14 @@ const addUser = async (data) => {
   if (admin && admin.role !== "admin") {
     throw new Error("you haven't access for this group");
   }
-  const added = await GroupUser.findOne({
+  const added = await GroupRepository.GroupUserFindOne({
     userId: data?.userId,
     groupId: data?.groupId,
   });
   if (added) {
     return { message: "This user is already added." };
   }
-  const result = await new GroupUser({
+  const result = await GroupRepository.newGroupUser({
     userId: data?.userId,
     groupId: data?.groupId,
   }).save();

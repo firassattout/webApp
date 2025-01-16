@@ -31,3 +31,7 @@ export const showBackups = asyncHandler(async (req, res) => {
   const result = await fileService.showBackups(req, res);
   res.json(result);
 });
+export const deleteFile = asyncHandler(async (req, res) => {
+  const result = await fileService.deleteFile(req, res);
+  res.json(result);
+});

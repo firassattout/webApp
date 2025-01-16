@@ -11,6 +11,7 @@ import {
   checkIn,
   checkOut,
   showBackups,
+  deleteFile,
 } from "../controllers/fileController.mjs";
 const upload = multer();
 export const fileRoutes = express.Router();
@@ -22,3 +23,4 @@ fileRoutes.get("/showFiles/:groupId", checkUser, showFiles);
 fileRoutes.post("/checkIn", checkUser, checkIn);
 fileRoutes.post("/checkOut", checkUser, checkOut);
 fileRoutes.post("/showBackups", checkUser, showBackups);
+fileRoutes.get("/deleteFile/:fileId", checkUser, deleteFile);

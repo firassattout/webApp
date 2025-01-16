@@ -68,9 +68,8 @@ const rejectFile = async (req) => {
   if (groupUser.role !== "admin") {
     throw new Error("you are not admin");
   }
-  await Files.findByIdAndUpdate(req.params?.fileId, {
-    $set: { acceptedByAdmin: false },
-  });
+  const files = await Files.findByIdAndDelete(data.params.fileId);
+  if (files) await deleteFile2(files.filesFolder);
 
   return { message: "rejected successfully" };
 };

@@ -1,7 +1,7 @@
 import { createFolder } from "../config/createFileForGroup.mjs";
 import { uploadFile } from "../config/uploadFiles.mjs";
 import {
-  endFileTransaction,
+  endTransactionWithFile,
   endTransaction,
   startTransaction,
 } from "../middleware/transactionHandlers.mjs";
@@ -16,18 +16,20 @@ import { fileTypeFromBuffer } from "file-type";
 import mammoth from "mammoth";
 import { logEvent } from "./tracingService.mjs";
 import { GroupUser } from "../models/GroupUser.mjs";
+import { deleteFile2 } from "../config/deleteFiles.mjs";
+import GroupRepository from "../repositories/GroupRepository.mjs";
 
 const create = await withTransaction(
   startTransaction,
-  endFileTransaction
+  endTransactionWithFile
 )(async (req, context) => {
   let folder;
   let filePath;
   const { error } = validateFiles(req?.body);
   if (error) throw new Error(error.details[0].message);
   if (req?.files[0]) {
-    const group = await Groups.findById(req.body.groupId);
-    const groupUser = await GroupUser.findOne({
+    const group = await GroupRepository.findById(req.body.groupId);
+    const groupUser = await GroupRepository.findOne({
       userId: req.body?.IdFromToken,
       groupId: group?.id,
     });
@@ -94,7 +96,7 @@ const update = async (req) => {
     throw new Error("The file is not reserved.");
   }
 
-  const backups = await Backups.find({ fileId: file.id });
+  const backups = await FileRepository.findBackups({ fileId: file.id });
 
   const { id } = await uploadFile(req?.files[0], file.filesFolder, file.name);
 
@@ -120,8 +122,8 @@ const update = async (req) => {
 };
 
 const differences = async (req, res) => {
-  const backup1 = await Backups.findById(req.body.id1);
-  const backup2 = await Backups.findById(req.body.id2);
+  const backup1 = await FileRepository.findByIdBackups(req.body.id1);
+  const backup2 = await FileRepository.findByIdBackups(req.body.id2);
 
   if (!backup1 || !backup2) throw new Error("Error");
   const fileUrl1 = backup1?.filePath;
@@ -215,7 +217,7 @@ const checkIn = await withTransaction(
   }
 
   for (const file of data.body.filesId) {
-    const result = await Files.findByIdAndUpdate(file, {
+    const result = await FileRepository.findByIdAndUpdate(file, {
       $set: { status: "close", reservedBy: data.body.IdFromToken },
     }).session(context.session);
 
@@ -238,7 +240,7 @@ const checkOut = async (data) => {
   const file = await FileRepository.findById(data.body.fileId);
 
   if (file.reservedBy?.toString() === data.body.IdFromToken) {
-    const result = await Files.findByIdAndUpdate(data.body.fileId, {
+    const result = await FileRepository.findByIdAndUpdate(data.body.fileId, {
       $set: { status: "open", reservedBy: null },
     });
 
@@ -258,7 +260,7 @@ const showBackups = async (data) => {
   if (!data.body.fileId) {
     throw new Error("Error");
   }
-  const backups = await Backups.find({ fileId: data.body.fileId })
+  const backups = await FileRepository.findBackups({ fileId: data.body.fileId })
     .sort({
       createdAt: -1,
     })
@@ -269,7 +271,21 @@ const showBackups = async (data) => {
   }
   return backups;
 };
+const deleteFile = async (data) => {
+  const file = await FileRepository.findById(data.params?.fileId);
+  const groupUser = await GroupUser.findOne({
+    userId: data.body?.IdFromToken,
+    groupId: file.groupId,
+  });
 
+  if (groupUser.role !== "admin") {
+    throw new Error("you are not admin");
+  }
+  const files = await FileRepository.findByIdAndDelete(data.params.fileId);
+  if (files) await deleteFile2(files.filesFolder);
+
+  return { message: "Deleted File successfully" };
+};
 export default {
   create,
   show,
@@ -278,4 +294,5 @@ export default {
   checkIn,
   checkOut,
   showBackups,
+  deleteFile,
 };

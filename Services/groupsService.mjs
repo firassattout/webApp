@@ -6,6 +6,7 @@ import {
 } from "../middleware/transactionHandlers.mjs";
 import { withTransaction } from "../middleware/transactionMiddleware.mjs";
 import { validateGroups } from "../models/Groups.mjs";
+import { GroupUser } from "../models/GroupUser.mjs";
 import { Users } from "../models/Users.mjs";
 import GroupRepository from "../repositories/GroupRepository.mjs";
 import { logEvent } from "./tracingService.mjs";
@@ -53,14 +54,14 @@ const create = await withTransaction(
 });
 
 const show = async (data) => {
-  const groupUser = await GroupRepository.GroupUserFind({
+  const groupUser = await GroupUser.find({
     userId: data?.body.IdFromToken,
   }).populate("groupId");
   return groupUser;
 };
 
 const showUsers = async (data) => {
-  const groupUser = await GroupRepository.GroupUserFind({
+  const groupUser = await GroupUser.find({
     groupId: data?.groupId,
   }).populate("userId");
   const result = groupUser.map((i) => {

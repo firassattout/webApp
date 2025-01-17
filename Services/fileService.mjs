@@ -269,7 +269,7 @@ const showBackups = async (data) => {
   if (!data.body.fileId) {
     throw new Error("Error");
   }
-  const backups = await FileRepository.findBackups({ fileId: data.body.fileId })
+  const backups = await Backups.find({ fileId: data.body.fileId })
     .sort({
       createdAt: -1,
     })

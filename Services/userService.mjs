@@ -1,3 +1,4 @@
+import { Files } from "../models/Files.mjs";
 import { Users } from "../models/Users.mjs";
 import FileRepository from "../repositories/FileRepository.mjs";
 import GroupRepository from "../repositories/GroupRepository.mjs";
@@ -20,14 +21,14 @@ const fileRequireAcceptForAdmin = async (req) => {
   if (groupUser?.role !== "admin") {
     throw new Error("you not admin");
   }
-  const files = await FileRepository.find({
+  const files = await Files.find({
     groupId: req?.params?.groupId,
     acceptedByAdmin: false,
   }).populate("addedBy", "name");
   return files;
 };
 const fileRequireAcceptForUser = async (req) => {
-  const files = await FileRepository.find({
+  const files = await Files.find({
     groupId: req?.params?.groupId,
     addedBy: req?.body?.IdFromToken,
     acceptedByAdmin: false,

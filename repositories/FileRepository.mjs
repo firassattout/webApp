@@ -18,7 +18,7 @@ export default new (class FileRepository {
   }
 
   async findByIdBackups(groupId) {
-    return await Backups.findById({ group: groupId });
+    return await Backups.findById(groupId);
   }
 
   async createFile(data) {

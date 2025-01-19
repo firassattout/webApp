@@ -24,5 +24,3 @@ user.get(
 );
 user.get("/acceptFile/:fileId", checkUser, acceptFile);
 user.get("/rejectFile/:fileId", checkUser, rejectFile);
-user.get("/tracesFile/:fileId", checkUser, getTraces);
-user.get("/TracesGroup/:groupId", checkUser, TracesGroup);

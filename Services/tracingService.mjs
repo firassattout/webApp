@@ -20,11 +20,11 @@ export const logEvent = async (action, userId, details, fileId) => {
   }
 };
 
-export const getTraces = async (req, res) => {
-  if (!req?.params?.fileId) {
+export const getTraces = async (req) => {
+  if (!req?.body?.fileId) {
     throw new Error("id not found");
   }
-  const file = await FileRepository.findById(req.params?.fileId);
+  const file = await FileRepository.findById(req.body?.fileId);
   const groupUser = await GroupRepository.GroupUserFindOne({
     userId: req.body?.IdFromToken,
     groupId: file.groupId,
@@ -36,9 +36,10 @@ export const getTraces = async (req, res) => {
   const traces = await Tracing.find({ fileId: file.id })
     .populate("user", "name email")
     .sort({ createdAt: -1 });
-  res.json(traces);
+  return traces;
 };
-export const TracesGroup = async (req, res) => {
+
+export const TracesGroup = async (req) => {
   if (!req?.params?.groupId) {
     throw new Error("id not found");
   }
@@ -56,7 +57,7 @@ export const TracesGroup = async (req, res) => {
   const traces = await Tracing.find({ fileId: { $in: [...ids] } })
     .populate("user", "name email")
     .sort({ createdAt: -1 });
-  res.json(traces);
+  return traces;
 };
 
 export const exportTracesAsText = async (traces, outputPath) => {
@@ -87,8 +88,8 @@ export const exportTracesAsPDF = async (traces, outputPath) => {
   traces.forEach((trace, index) => {
     doc.fontSize(10).text(`Event ${index + 1}:`, { bold: true });
     doc.text(
-      `Action: ${trace.action}     User: ${trace.user.name} (${
-        trace.user.email
+      `Action: ${trace.action}     User: ${trace.user?.name} (${
+        trace.user?.email
       })   Details: ${JSON.stringify(trace.details, null, 2)}`
     );
 
